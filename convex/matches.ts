@@ -67,9 +67,13 @@ export const getUserMatches = query({
 
 // Get ELO leaderboard
 export const getLeaderboard = query({
-  args: { limit: v.optional(v.number()) },
+  args: {
+    limit: v.optional(v.number()),
+    showPersonas: v.optional(v.boolean()), // true = show imported personas (role 0), false = show real users (role >= 1)
+  },
   handler: async (ctx, args) => {
     const limit = args.limit || 50;
+    const showPersonas = args.showPersonas ?? false; // Default to showing real users
 
     const users = await ctx.db
       .query("users")
@@ -77,9 +81,18 @@ export const getLeaderboard = query({
       .order("desc")
       .take(limit);
 
-    // Filter only completed profiles with names
+    // Filter based on role and completed profiles
     return users
-      .filter((u) => u.onboardingCompleted && u.name)
+      .filter((u) => {
+        if (!u.onboardingCompleted || !u.name) return false;
+
+        // Filter by role based on showPersonas toggle
+        if (showPersonas) {
+          return u.role === 0; // Show only imported personas
+        } else {
+          return u.role >= 1; // Show real users (normal, admin, superadmin)
+        }
+      })
       .map((u) => ({
         clerkId: u.clerkId,
         name: u.name!,
@@ -89,6 +102,7 @@ export const getLeaderboard = query({
         gender: u.gender,
         eloScore: u.eloScore || 1000,
         experience: u.experience?.[0], // Show most recent experience
+        role: u.role, // Include role for debugging/display
       }));
   },
 });

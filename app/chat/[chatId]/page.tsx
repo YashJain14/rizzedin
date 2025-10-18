@@ -198,7 +198,7 @@ export default function ChatPage() {
                 </div>
               ) : (
                 <>
-                  {chat.messages.map((msg, idx) => (
+                  {chat.messages.map((msg: { role: string; content: string; timestamp: number }, idx: number) => (
                     <div
                       key={idx}
                       className={`flex ${

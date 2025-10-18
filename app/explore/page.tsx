@@ -1,14 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trophy, Briefcase, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Trophy, Briefcase, Loader2, Users, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function ExplorePage() {
-  const leaderboard = useQuery(api.matches.getLeaderboard, { limit: 50 });
+  const [showPersonas, setShowPersonas] = useState(false);
+  const leaderboard = useQuery(api.matches.getLeaderboard, {
+    limit: 50,
+    showPersonas,
+  });
 
   if (!leaderboard) {
     return (
@@ -23,18 +30,52 @@ export default function ExplorePage() {
       <div className="container mx-auto p-4 md:p-8 max-w-6xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight flex items-center gap-3">
-            <Trophy className="h-8 w-8 md:h-10 md:w-10 text-primary" />
-            Leaderboard
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Top professionals ranked by their ELO score
-          </p>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight flex items-center gap-3">
+                <Trophy className="h-8 w-8 md:h-10 md:w-10 text-primary" />
+                Leaderboard
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                {showPersonas
+                  ? "Practice with famous personas"
+                  : "Top professionals ranked by their ELO score"}
+              </p>
+            </div>
+
+            {/* Toggle between real users and personas */}
+            <div className="flex gap-2 bg-muted p-1 rounded-lg">
+              <Button
+                variant={!showPersonas ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setShowPersonas(false)}
+                className={cn(
+                  "flex items-center gap-2 transition-all",
+                  !showPersonas && "shadow-sm"
+                )}
+              >
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Real Users</span>
+              </Button>
+              <Button
+                variant={showPersonas ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setShowPersonas(true)}
+                className={cn(
+                  "flex items-center gap-2 transition-all",
+                  showPersonas && "shadow-sm"
+                )}
+              >
+                <Sparkles className="h-4 w-4" />
+                <span className="hidden sm:inline">Practice Personas</span>
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Leaderboard */}
         <div className="space-y-3">
-          {leaderboard.map((user, index) => (
+          {leaderboard.map((user: any, index: number) => (
             <Card
               key={user.clerkId}
               className={`transition-all hover:shadow-lg ${
@@ -116,6 +157,12 @@ export default function ExplorePage() {
                         ELO: {user.eloScore}
                       </Badge>
                       <Badge variant="outline">{user.gender}</Badge>
+                      {user.role === 0 && (
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Persona
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -127,7 +174,11 @@ export default function ExplorePage() {
         {leaderboard.length === 0 && (
           <Card>
             <CardContent className="pt-6 text-center">
-              <p className="text-muted-foreground">No users on the leaderboard yet</p>
+              <p className="text-muted-foreground">
+                {showPersonas
+                  ? "No practice personas available yet. Use the admin panel to import some!"
+                  : "No users on the leaderboard yet"}
+              </p>
             </CardContent>
           </Card>
         )}
