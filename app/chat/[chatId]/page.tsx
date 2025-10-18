@@ -21,37 +21,14 @@ export default function ChatPage() {
 
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [isCreatingChat, setIsCreatingChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const chat = useQuery(api.aiChat.getChat, { chatId });
-  const getOrCreateChat = useMutation(api.aiChat.getOrCreateChat);
   const sendMessage = useAction(api.aiChat.sendMessage);
 
-  // Parse chatId to get swiperId and swipedId
-  const [swiperId, swipedId] = chatId.split("-");
-
-  // Create chat on mount if it doesn't exist
-  useEffect(() => {
-    const createChat = async () => {
-      if (user && swiperId && swipedId && !chat && !isCreatingChat) {
-        setIsCreatingChat(true);
-        try {
-          await getOrCreateChat({
-            swiperId,
-            swipedId,
-          });
-        } catch (error) {
-          console.error("Error creating chat:", error);
-          toast.error("Failed to create chat");
-        } finally {
-          setIsCreatingChat(false);
-        }
-      }
-    };
-
-    createChat();
-  }, [user, swiperId, swipedId, chat, isCreatingChat, getOrCreateChat]);
+  // Get swiperId and swipedId from the chat document (safer than parsing)
+  const swiperId = chat?.swiperId;
+  const swipedId = chat?.swipedId;
 
   // Get swiped user details
   const swipedUser = useQuery(
@@ -72,6 +49,11 @@ export default function ChatPage() {
       return;
     }
 
+    if (!swipedId) {
+      toast.error("Invalid chat");
+      return;
+    }
+
     setIsSending(true);
     const userMessage = message;
     setMessage("");
@@ -79,8 +61,9 @@ export default function ChatPage() {
     try {
       const response = await sendMessage({
         swiperId: user.id,
-        swipedId: swipedId,
+        swipedId,
         userMessage,
+        chatId, // Pass the full chatId to ensure correct chat is used
       });
 
       if (response.isEvaluation) {
@@ -107,8 +90,8 @@ export default function ChatPage() {
     }
   };
 
-  // Show loading while queries are resolving or chat is being created
-  if (chat === undefined || swipedUser === undefined || isCreatingChat) {
+  // Show loading while queries are resolving
+  if (chat === undefined || swipedUser === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -118,14 +101,32 @@ export default function ChatPage() {
 
   // If queries resolved but data is missing, show error
   if (!chat || !swipedUser) {
+    console.error("Chat page error:", {
+      chatId,
+      chat,
+      swipedUser,
+      swiperId,
+      swipedId,
+    });
+
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">Failed to load chat. Please try again.</p>
-            <Button onClick={() => router.push("/fyp")} className="mt-4">
-              Back to FYP
-            </Button>
+            <p className="text-muted-foreground">
+              {!chat ? `Chat not found (ID: ${chatId})` : "User not found"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              This might be a timing issue. Try refreshing the page.
+            </p>
+            <div className="flex gap-2 mt-4 justify-center">
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Refresh
+              </Button>
+              <Button onClick={() => router.push("/fyp")}>
+                Back to FYP
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

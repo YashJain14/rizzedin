@@ -1,24 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useAction } from "convex/react";
+import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Trophy, Briefcase, Loader2, Users, Sparkles, ImagePlus } from "lucide-react";
+import { Trophy, Briefcase, Loader2, Users, Sparkles, ImagePlus, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function ExplorePage() {
+  const router = useRouter();
   const { user } = useUser();
   const currentUser = useQuery(api.users.getUserByClerkId, user ? { clerkId: user.id } : "skip");
   const isAdmin = currentUser?.role && currentUser.role >= 2;
 
   const [showPersonas, setShowPersonas] = useState(false);
   const [generatingImageFor, setGeneratingImageFor] = useState<string | null>(null);
+  const [startingChatWith, setStartingChatWith] = useState<string | null>(null);
 
   const leaderboard = useQuery(api.matches.getLeaderboard, {
     limit: 50,
@@ -26,6 +29,7 @@ export default function ExplorePage() {
   });
 
   const generatePersonaImage = useAction((api as any).bulkImport.generatePersonaImage);
+  const getOrCreateChat = useMutation(api.aiChat.getOrCreateChat);
 
   const handleGenerateImage = async (clerkId: string, name: string) => {
     setGeneratingImageFor(clerkId);
@@ -41,6 +45,33 @@ export default function ExplorePage() {
       console.error(error);
     } finally {
       setGeneratingImageFor(null);
+    }
+  };
+
+  const handleStartChat = async (targetClerkId: string, targetName: string) => {
+    if (!user) return;
+
+    setStartingChatWith(targetClerkId);
+    try {
+      // Create a unique chat ID for admins (allows multiple fresh chats with same person)
+      const timestamp = Date.now();
+      const chatId = `${user.id}-${targetClerkId}-${timestamp}`;
+
+      // Create new chat with unique ID
+      await getOrCreateChat({
+        swiperId: user.id,
+        swipedId: targetClerkId,
+        chatId: chatId,
+      });
+
+      // Navigate to chat with unique ID
+      router.push(`/chat/${chatId}`);
+      toast.success(`Starting chat with ${targetName}`);
+    } catch (error) {
+      toast.error("Failed to start chat");
+      console.error(error);
+    } finally {
+      setStartingChatWith(null);
     }
   };
 
@@ -193,7 +224,7 @@ export default function ExplorePage() {
                     )}
 
                     {/* Stats */}
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge
                         variant="secondary"
                         className={`${
@@ -210,6 +241,24 @@ export default function ExplorePage() {
                           <Sparkles className="h-3 w-3 mr-1" />
                           Persona
                         </Badge>
+                      )}
+
+                      {/* Admin: Start Chat Button */}
+                      {isAdmin && user.clerkId !== currentUser?.clerkId && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="ml-auto flex items-center gap-1.5"
+                          onClick={() => handleStartChat(user.clerkId, user.name)}
+                          disabled={startingChatWith === user.clerkId}
+                        >
+                          {startingChatWith === user.clerkId ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          )}
+                          <span className="text-xs">Start Chat</span>
+                        </Button>
                       )}
                     </div>
                   </div>

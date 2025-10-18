@@ -78,15 +78,114 @@ export function generateProfileVector(user: {
   return vector;
 }
 
-// Calculate ELO rating change
-export function calculateEloChange(
+// Calculate ELO rating change based on swipes (legacy - less weight)
+export function calculateEloChangeFromSwipe(
   playerRating: number,
   opponentRating: number,
   actualScore: number, // 1 for win (right swipe received), 0 for loss (left swipe received)
-  kFactor: number = 32
+  kFactor: number = 16 // Reduced K-factor, swipes matter less now
 ): number {
   const expectedScore = 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
   return Math.round(kFactor * (actualScore - expectedScore));
+}
+
+// Calculate ELO rating change based on AI conversation evaluation (primary factor)
+export function calculateEloChangeFromConversation(
+  userRating: number,
+  partnerRating: number,
+  rubricScore: number, // Overall score from rubric (1-10)
+  kFactor: number = 48 // Higher K-factor, conversations matter MORE
+): number {
+  // Normalize rubric score to 0-1 range
+  // 5 = neutral (expected), 10 = perfect (1.0), 1 = terrible (0.0)
+  const normalizedScore = (rubricScore - 1) / 9; // Maps 1-10 to 0-1
+
+  const expectedScore = 1 / (1 + Math.pow(10, (partnerRating - userRating) / 400));
+  return Math.round(kFactor * (normalizedScore - expectedScore));
+}
+
+// Calculate comprehensive profile score (replaces simple ELO)
+export function calculateProfileScore(user: {
+  eloScore?: number;
+  totalRightSwipes?: number;
+  totalLeftSwipes?: number;
+  conversationsCompleted?: number;
+  aiApprovalsReceived?: number;
+  aiRejectionsReceived?: number;
+  avgRubricScores?: {
+    engagement: number;
+    depth: number;
+    authenticity: number;
+    respectfulness: number;
+    compatibility: number;
+    overall: number;
+  };
+  matchCount?: number;
+  timestamp: number;
+}): number {
+  // 1. Conversation Quality Score (70% weight) - MOST IMPORTANT
+  let conversationScore = 0;
+  if (user.conversationsCompleted && user.conversationsCompleted > 0 && user.avgRubricScores) {
+    // Weighted average of rubric scores
+    const rubricScore =
+      user.avgRubricScores.overall * 0.35 +      // Overall impression (35%)
+      user.avgRubricScores.engagement * 0.25 +    // How engaged (25%)
+      user.avgRubricScores.depth * 0.20 +         // Thoughtfulness (20%)
+      user.avgRubricScores.authenticity * 0.10 +  // Genuine (10%)
+      user.avgRubricScores.respectfulness * 0.10; // Appropriate (10%)
+
+    // Normalize to 0-1 (assuming scores are 1-10)
+    conversationScore = (rubricScore - 1) / 9;
+
+    // Apply confidence penalty for low sample size
+    const sampleSizeMultiplier = Math.min(user.conversationsCompleted / 5, 1); // Full confidence after 5 convos
+    conversationScore *= sampleSizeMultiplier;
+  }
+
+  // 2. Swipe Appeal Score (20% weight) - Wilson score
+  let swipeScore = 0;
+  const totalSwipes = (user.totalRightSwipes || 0) + (user.totalLeftSwipes || 0);
+  if (totalSwipes > 0) {
+    swipeScore = calculateWilsonScore(user.totalRightSwipes || 0, totalSwipes);
+  }
+
+  // 3. Match Success Rate (10% weight)
+  let matchScore = 0;
+  if (user.conversationsCompleted && user.conversationsCompleted > 0) {
+    matchScore = (user.matchCount || 0) / user.conversationsCompleted;
+  }
+
+  // 4. Recency Bonus (5% weight) - newer users get slight boost
+  const daysSinceJoined = (Date.now() - user.timestamp) / (1000 * 60 * 60 * 24);
+  const recencyScore = Math.max(0, 1 - daysSinceJoined / 60); // 60 day decay
+
+  // Combine all factors
+  const finalScore =
+    conversationScore * 0.70 +
+    swipeScore * 0.20 +
+    matchScore * 0.05 +
+    recencyScore * 0.05;
+
+  // Scale to ELO-like range (800-1800)
+  return Math.round(800 + (finalScore * 1000));
+}
+
+// Wilson score confidence interval for binomial proportion
+function calculateWilsonScore(
+  positiveCount: number,
+  totalCount: number,
+  confidence: number = 0.95
+): number {
+  if (totalCount === 0) return 0;
+
+  const n = totalCount;
+  const p = positiveCount / n;
+  const z = 1.96; // 95% confidence
+
+  const numerator = p + (z * z) / (2 * n) - z * Math.sqrt((p * (1 - p) + (z * z) / (4 * n)) / n);
+  const denominator = 1 + (z * z) / n;
+
+  return Math.max(0, numerator / denominator);
 }
 
 // Get personalized recommendations with vector similarity
