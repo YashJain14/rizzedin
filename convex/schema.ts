@@ -20,6 +20,7 @@ export default defineSchema({
     experience: v.optional(v.array(v.object({
       title: v.string(),
       company: v.string(),
+      companyUrl: v.optional(v.string()),
       companyLogo: v.optional(v.string()),
       location: v.optional(v.string()),
       startDate: v.string(), // e.g., "Jan 2020"
@@ -32,6 +33,7 @@ export default defineSchema({
     // LinkedIn education (array of education objects)
     education: v.optional(v.array(v.object({
       school: v.string(),
+      schoolUrl: v.optional(v.string()),
       schoolLogo: v.optional(v.string()),
       degree: v.optional(v.string()), // e.g., "Bachelor's degree"
       fieldOfStudy: v.optional(v.string()), // e.g., "Computer Science"

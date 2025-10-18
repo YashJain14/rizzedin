@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 export default function OnboardingPage() {
   const { user, isLoaded } = useUser();
@@ -20,7 +21,8 @@ export default function OnboardingPage() {
     user?.id ? { clerkId: user.id } : "skip"
   );
   const createUser = useMutation(api.users.createUser);
-  const completeOnboarding = useMutation(api.users.completeOnboarding);
+  const saveOnboardingData = useMutation(api.users.saveOnboardingData);
+  const scrapeLinkedInProfile = useAction(api.linkedinScraper.scrapeLinkedInProfile);
 
   const [formData, setFormData] = useState({
     linkedinUrl: "",
@@ -30,6 +32,7 @@ export default function OnboardingPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -72,9 +75,11 @@ export default function OnboardingPage() {
     }
 
     setIsSubmitting(true);
+    setLoadingMessage("Saving your data...");
 
     try {
-      await completeOnboarding({
+      // Step 1: Save onboarding data
+      await saveOnboardingData({
         clerkId: user!.id,
         linkedinUrl: formData.linkedinUrl,
         age: parseInt(formData.age),
@@ -82,11 +87,27 @@ export default function OnboardingPage() {
         datingPreference: formData.datingPreference,
       });
 
-      // Redirect to home after successful onboarding
+      // Step 2: Scrape LinkedIn profile in background
+      setLoadingMessage("Enriching your profile from LinkedIn...");
+      const result = await scrapeLinkedInProfile({
+        clerkId: user!.id,
+        linkedinUrl: formData.linkedinUrl,
+      });
+
+      if (!result.success) {
+        setError(`Failed to enrich profile: ${result.error}`);
+        setIsSubmitting(false);
+        setLoadingMessage("");
+        return;
+      }
+
+      // Step 3: Redirect to home after successful onboarding and scraping
+      setLoadingMessage("All done! Redirecting...");
       router.push("/");
     } catch (err) {
       setError("Something went wrong. Please try again.");
       setIsSubmitting(false);
+      setLoadingMessage("");
     }
   };
 
@@ -193,13 +214,27 @@ export default function OnboardingPage() {
               <div className="text-destructive text-sm text-center">{error}</div>
             )}
 
+            {loadingMessage && (
+              <div className="text-primary text-sm text-center flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {loadingMessage}
+              </div>
+            )}
+
             <Button
               type="submit"
               disabled={isSubmitting}
               className="w-full"
               size="lg"
             >
-              {isSubmitting ? "Completing..." : "Complete Profile"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Complete Profile"
+              )}
             </Button>
           </form>
         </CardContent>
