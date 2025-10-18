@@ -51,6 +51,9 @@ export default defineSchema({
     totalLeftSwipes: v.optional(v.number()), // Total left swipes received
     matchCount: v.optional(v.number()), // Total matches
 
+    // AI Persona customization
+    aiPersonaPrompt: v.optional(v.string()), // Custom system prompt for their AI persona
+
     timestamp: v.number(),
   })
     .index("by_clerk_id", ["clerkId"])
@@ -67,13 +70,39 @@ export default defineSchema({
     .index("by_swiped", ["swipedId"])
     .index("by_swiper_and_swiped", ["swiperId", "swipedId"]),
 
-  // Matches table - created when both users swipe right
+  // Matches table - created when AI approves after 10 messages
   matches: defineTable({
-    user1Id: v.string(), // Clerk ID of first user
-    user2Id: v.string(), // Clerk ID of second user
+    user1Id: v.string(), // Clerk ID of first user (the one who swiped right)
+    user2Id: v.string(), // Clerk ID of second user (the AI persona owner)
     timestamp: v.number(),
-    chatStarted: v.optional(v.boolean()), // Has either user started chatting
+
+    // Approval flow
+    user1Approved: v.optional(v.boolean()), // Has user1 approved to share LinkedIn
+    user2Approved: v.optional(v.boolean()), // Has user2 approved to share LinkedIn
+    bothApproved: v.optional(v.boolean()), // Both approved - LinkedIn shared
   })
     .index("by_user1", ["user1Id"])
     .index("by_user2", ["user2Id"]),
+
+  // AI Chats table - tracks conversations between users and AI personas
+  aiChats: defineTable({
+    chatId: v.string(), // Unique chat ID (swiperId-swipedId)
+    swiperId: v.string(), // User trying to rizz up the AI
+    swipedId: v.string(), // User whose AI persona is being chatted with
+
+    messages: v.array(v.object({
+      role: v.string(), // "user" or "assistant"
+      content: v.string(),
+      timestamp: v.number(),
+    })),
+
+    messageCount: v.number(), // Track number of user messages (max 10)
+    aiDecision: v.optional(v.string()), // "approved" or "rejected" after 10 messages
+    aiReasoning: v.optional(v.string()), // AI's reasoning for the decision
+
+    timestamp: v.number(),
+  })
+    .index("by_chat_id", ["chatId"])
+    .index("by_swiper", ["swiperId"])
+    .index("by_swiped", ["swipedId"]),
 });

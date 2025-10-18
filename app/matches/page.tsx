@@ -1,13 +1,14 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Loader2, Sparkles } from "lucide-react";
+import { Heart, Loader2, Sparkles, Check, ExternalLink, Clock } from "lucide-react";
+import { toast } from "sonner";
 
 export default function MatchesPage() {
   const { user } = useUser();
@@ -16,6 +17,22 @@ export default function MatchesPage() {
     api.matches.getUserMatches,
     user?.id ? { clerkId: user.id } : "skip"
   );
+
+  const approveMatch = useMutation(api.matches.approveMatch);
+
+  const handleApprove = async (matchId: any) => {
+    if (!user) return;
+
+    try {
+      await approveMatch({
+        matchId,
+        clerkId: user.id,
+      });
+      toast.success("Match approved! Waiting for the other person to approve.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to approve match");
+    }
+  };
 
   if (!matches) {
     return (
@@ -86,13 +103,63 @@ export default function MatchesPage() {
                     </Badge>
                   </div>
 
-                  {/* Actions */}
+                  {/* Approval Status & Actions */}
                   <div className="space-y-2">
-                    <Button className="w-full" size="sm" disabled>
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Start Chat (Coming Soon)
-                    </Button>
-                    <p className="text-xs text-center text-muted-foreground">
+                    {match.bothApproved ? (
+                      <>
+                        <div className="flex items-center gap-2 text-green-600 mb-2">
+                          <Check className="h-4 w-4" />
+                          <span className="text-sm font-medium">Both Approved!</span>
+                        </div>
+                        {match.user?.linkedinUrl ? (
+                          <Button
+                            className="w-full"
+                            size="sm"
+                            asChild
+                          >
+                            <a
+                              href={match.user.linkedinUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              View LinkedIn Profile
+                            </a>
+                          </Button>
+                        ) : (
+                          <p className="text-xs text-center text-muted-foreground">
+                            No LinkedIn URL available
+                          </p>
+                        )}
+                      </>
+                    ) : match.currentUserApproved ? (
+                      <>
+                        <div className="flex items-center gap-2 text-amber-600 mb-2">
+                          <Clock className="h-4 w-4" />
+                          <span className="text-sm font-medium">Waiting for approval...</span>
+                        </div>
+                        <Button className="w-full" size="sm" variant="secondary" disabled>
+                          <Check className="h-4 w-4 mr-2" />
+                          You Approved
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Approve to share LinkedIn profiles with each other
+                        </p>
+                        <Button
+                          className="w-full"
+                          size="sm"
+                          onClick={() => handleApprove(match.matchId)}
+                        >
+                          <Heart className="h-4 w-4 mr-2" />
+                          Approve Match
+                        </Button>
+                      </>
+                    )}
+
+                    <p className="text-xs text-center text-muted-foreground mt-2">
                       Matched{" "}
                       {new Date(match.timestamp).toLocaleDateString(undefined, {
                         month: "short",
@@ -113,7 +180,7 @@ export default function MatchesPage() {
               <div>
                 <h2 className="text-xl font-semibold mb-2">No matches yet</h2>
                 <p className="text-muted-foreground">
-                  Start swiping to find your perfect professional match!
+                  Start swiping to chat with AI personas and find your perfect match!
                 </p>
               </div>
               <Button asChild>

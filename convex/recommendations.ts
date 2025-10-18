@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, internalMutation } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 
 // Calculate cosine similarity between two vectors
 function cosineSimilarity(vecA: number[], vecB: number[]): number {
@@ -204,8 +204,8 @@ export const getPersonalizedRecommendations = query({
   },
 });
 
-// Update user profile vector (internal mutation)
-export const updateProfileVector = internalMutation({
+// Update user profile vector
+export const updateProfileVector = mutation({
   args: {
     clerkId: v.string(),
   },

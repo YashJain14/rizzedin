@@ -188,3 +188,27 @@ export const updateUserProfile = mutation({
     return user._id;
   },
 });
+
+// Update AI persona prompt
+export const updateAiPersonaPrompt = mutation({
+  args: {
+    clerkId: v.string(),
+    aiPersonaPrompt: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(user._id, {
+      aiPersonaPrompt: args.aiPersonaPrompt,
+    });
+
+    return user._id;
+  },
+});

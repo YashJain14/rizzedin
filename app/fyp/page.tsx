@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import { toast } from "sonner";
 
 export default function FYPPage() {
   const { user } = useUser();
+  const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
@@ -40,15 +42,17 @@ export default function FYPPage() {
       });
 
       if (direction === "right") {
-        toast.success("Liked!");
+        // Redirect to AI chat page
+        const chatId = `${user.id}-${currentProfile.clerkId}`;
+        router.push(`/chat/${chatId}`);
+      } else {
+        // Move to next profile for left swipe
+        setTimeout(() => {
+          setCurrentIndex((prev) => prev + 1);
+          setIsAnimating(false);
+          setIsAboutExpanded(false);
+        }, 300);
       }
-
-      // Move to next profile
-      setTimeout(() => {
-      setCurrentIndex((prev) => prev + 1);
-      setIsAnimating(false);
-      setIsAboutExpanded(false); // Reset expanded state
-    }, 300);
     } catch (error) {
       toast.error("Failed to record swipe");
       setIsAnimating(false);

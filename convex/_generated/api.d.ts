@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as aiChat from "../aiChat.js";
 import type * as linkedinScraper from "../linkedinScraper.js";
 import type * as matches from "../matches.js";
 import type * as recommendations from "../recommendations.js";
@@ -29,6 +30,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  aiChat: typeof aiChat;
   linkedinScraper: typeof linkedinScraper;
   matches: typeof matches;
   recommendations: typeof recommendations;

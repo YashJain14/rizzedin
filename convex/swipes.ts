@@ -64,47 +64,9 @@ export const recordSwipe = mutation({
         totalRightSwipes: (swipedUser.totalRightSwipes || 0) + 1,
       });
 
-      // Check if it's a match (both swiped right)
-      const reverseSwipe = await ctx.db
-        .query("swipes")
-        .withIndex("by_swiper_and_swiped", (q) =>
-          q.eq("swiperId", args.swipedId).eq("swipedId", args.swiperId)
-        )
-        .first();
-
-      if (reverseSwipe && reverseSwipe.direction === "right") {
-        // Check if match already exists
-        const existingMatch = await ctx.db
-          .query("matches")
-          .withIndex("by_user1", (q) => q.eq("user1Id", args.swiperId))
-          .filter((q) => q.eq(q.field("user2Id"), args.swipedId))
-          .first();
-
-        const reverseMatch = await ctx.db
-          .query("matches")
-          .withIndex("by_user1", (q) => q.eq("user1Id", args.swipedId))
-          .filter((q) => q.eq(q.field("user2Id"), args.swiperId))
-          .first();
-
-        if (!existingMatch && !reverseMatch) {
-          // Create match
-          await ctx.db.insert("matches", {
-            user1Id: args.swiperId,
-            user2Id: args.swipedId,
-            timestamp: Date.now(),
-            chatStarted: false,
-          });
-
-          // Update match counts for both users
-          await ctx.db.patch(swiper._id, {
-            matchCount: (swiper.matchCount || 0) + 1,
-          });
-
-          await ctx.db.patch(swipedUser._id, {
-            matchCount: (swipedUser.matchCount || 0) + 1,
-          });
-        }
-      }
+      // Note: Matches are no longer created automatically on mutual right swipes
+      // Instead, the swiper will chat with the AI persona of the swiped user
+      // A match is only created if the AI approves after 10 messages
     } else {
       // Left swipe - update left swipe count
       await ctx.db.patch(swipedUser._id, {

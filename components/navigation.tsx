@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Compass, Flame } from "lucide-react";
+import { Heart, Compass, Flame, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -21,13 +21,23 @@ const navItems = [
     href: "/matches",
     icon: Heart,
   },
+  {
+    name: "Profile",
+    href: "/profile",
+    icon: User,
+  },
 ];
 
 export function Navigation() {
   const pathname = usePathname();
 
-  // Don't show navigation on onboarding or sign-in/sign-up pages
-  if (pathname === "/onboarding" || pathname?.startsWith("/sign-")) {
+  // Don't show navigation on landing page, onboarding, sign-in/sign-up, or chat pages
+  if (
+    pathname === "/" ||
+    pathname === "/onboarding" ||
+    pathname?.startsWith("/sign-") ||
+    pathname?.startsWith("/chat/")
+  ) {
     return null;
   }
 

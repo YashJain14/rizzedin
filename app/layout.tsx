@@ -14,6 +14,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { Toaster } from 'sonner'
 import { Navigation } from '@/components/navigation'
+import { MainWrapper } from '@/components/main-wrapper'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -65,9 +66,9 @@ export default function RootLayout({
               </div>
             </header>
             <Navigation />
-            <main className="pt-16 lg:pl-64 pb-16 lg:pb-0">
+            <MainWrapper>
               {children}
-            </main>
+            </MainWrapper>
             <Toaster richColors position="top-center" />
           </ConvexClientProvider>
         </ThemeProvider>

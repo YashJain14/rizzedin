@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 
 // Get all matches for a user
 export const getUserMatches = query({
@@ -29,10 +29,20 @@ export const getUserMatches = query({
           .withIndex("by_clerk_id", (q) => q.eq("clerkId", otherUserId))
           .first();
 
+        // Determine which user is current user and which is other
+        const isUser1 = match.user1Id === args.clerkId;
+
         return {
           matchId: match._id,
           timestamp: match.timestamp,
-          chatStarted: match.chatStarted || false,
+          user1Id: match.user1Id,
+          user2Id: match.user2Id,
+
+          // Approval status
+          currentUserApproved: isUser1 ? match.user1Approved : match.user2Approved,
+          otherUserApproved: isUser1 ? match.user2Approved : match.user1Approved,
+          bothApproved: match.bothApproved || false,
+
           user: otherUser
             ? {
                 clerkId: otherUser.clerkId,
@@ -41,6 +51,7 @@ export const getUserMatches = query({
                 bio: otherUser.bio,
                 age: otherUser.age,
                 gender: otherUser.gender,
+                linkedinUrl: match.bothApproved ? otherUser.linkedinUrl : undefined,
               }
             : null,
         };
@@ -79,5 +90,42 @@ export const getLeaderboard = query({
         eloScore: u.eloScore || 1000,
         experience: u.experience?.[0], // Show most recent experience
       }));
+  },
+});
+
+// Approve a match to share LinkedIn profile
+export const approveMatch = mutation({
+  args: {
+    matchId: v.id("matches"),
+    clerkId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const match = await ctx.db.get(args.matchId);
+
+    if (!match) {
+      throw new Error("Match not found");
+    }
+
+    // Determine which user is approving
+    const isUser1 = match.user1Id === args.clerkId;
+
+    if (!isUser1 && match.user2Id !== args.clerkId) {
+      throw new Error("Unauthorized");
+    }
+
+    // Update approval status
+    if (isUser1) {
+      await ctx.db.patch(args.matchId, {
+        user1Approved: true,
+        bothApproved: match.user2Approved === true,
+      });
+    } else {
+      await ctx.db.patch(args.matchId, {
+        user2Approved: true,
+        bothApproved: match.user1Approved === true,
+      });
+    }
+
+    return { success: true };
   },
 });
