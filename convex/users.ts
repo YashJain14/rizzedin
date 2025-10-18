@@ -36,6 +36,7 @@ export const createUser = mutation({
       age: 0, // Will be set during onboarding
       gender: "", // Will be set during onboarding
       datingPreference: "", // Will be set during onboarding
+      role: 1, // Default to normal user
       eloScore: 1000, // Starting ELO score
       totalRightSwipes: 0,
       totalLeftSwipes: 0,
@@ -212,3 +213,4 @@ export const updateAiPersonaPrompt = mutation({
     return user._id;
   },
 });
+

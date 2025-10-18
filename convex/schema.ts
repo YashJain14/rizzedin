@@ -10,6 +10,9 @@ export default defineSchema({
     datingPreference: v.string(), // "men", "women", "both"
     onboardingCompleted: v.boolean(),
 
+    // Role-based access control
+    role: v.number(), // 0 = imported persona (practice), 1 = normal user, 2 = admin, 3 = superadmin
+
     // Fields added later from LinkedIn scraping
     name: v.optional(v.string()),
     image: v.optional(v.string()),

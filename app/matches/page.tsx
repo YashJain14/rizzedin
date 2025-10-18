@@ -59,7 +59,7 @@ export default function MatchesPage() {
         {/* Matches Grid */}
         {matches.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {matches.map((match) => (
+            {matches.map((match: any) => (
               <Card
                 key={match.matchId}
                 className="overflow-hidden hover:shadow-lg transition-shadow"

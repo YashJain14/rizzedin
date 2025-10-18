@@ -161,7 +161,7 @@ export default function FYPPage() {
                     Experience
                   </h3>
                   <div className="space-y-4">
-                    {currentProfile.experience.slice(0, 3).map((exp, idx) => (
+                    {currentProfile.experience.slice(0, 3).map((exp: any, idx: number) => (
                       <div key={idx} className="flex gap-3">
                         {/* Company Logo */}
                         <div className="flex-shrink-0">
@@ -213,7 +213,7 @@ export default function FYPPage() {
                     Education
                   </h3>
                   <div className="space-y-4">
-                    {currentProfile.education.slice(0, 3).map((edu, idx) => (
+                    {currentProfile.education.slice(0, 3).map((edu: any, idx: number) => (
                       <div key={idx} className="flex gap-3">
                         {/* School Logo */}
                         <div className="flex-shrink-0">

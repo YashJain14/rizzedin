@@ -42,3 +42,6 @@ next-env.d.ts
 
 # convex
 .convex/
+
+# claude
+/.claude
