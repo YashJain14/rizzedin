@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, Compass, Flame, User, UserPlus } from "lucide-react";
+import { Heart, Compass, Flame, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
@@ -34,9 +34,9 @@ const navItems = [
     adminOnly: false,
   },
   {
-    name: "Admin",
-    href: "/admin/bulk-import",
-    icon: UserPlus,
+    name: "Personas",
+    href: "/admin/personas",
+    icon: Users,
     adminOnly: true,
   },
 ];
