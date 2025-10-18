@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { LandingPage } from "@/components/landing-page";
 
 export default function Home() {
   const { user, isLoaded } = useUser();
@@ -27,7 +28,22 @@ export default function Home() {
     }
   }, [isLoaded, user, existingUser, router]);
 
-  if (!isLoaded || !user || !existingUser) {
+  // Show loading only when checking auth status
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show landing page for logged-out users
+  if (!user) {
+    return <LandingPage />;
+  }
+
+  // Show loading while fetching user data
+  if (!existingUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
