@@ -48,11 +48,26 @@ export default defineSchema({
     }))),
 
     // Dating app fields
-    eloScore: v.optional(v.number()), // ELO rating based on right swipes received
+    eloScore: v.optional(v.number()), // ELO rating based on conversation quality and swipes
     profileVector: v.optional(v.array(v.number())), // Vector embedding for similarity matching
     totalRightSwipes: v.optional(v.number()), // Total right swipes received
     totalLeftSwipes: v.optional(v.number()), // Total left swipes received
     matchCount: v.optional(v.number()), // Total matches
+
+    // AI Conversation Quality Metrics (weighted heavily in ELO)
+    conversationsCompleted: v.optional(v.number()), // Conversations that reached 10 messages
+    aiApprovalsReceived: v.optional(v.number()), // Times AI approved conversations with them
+    aiRejectionsReceived: v.optional(v.number()), // Times AI rejected conversations with them
+
+    // Average Rubric Scores (aggregated from all conversations)
+    avgRubricScores: v.optional(v.object({
+      engagement: v.number(), // Average engagement score
+      depth: v.number(), // Average depth score
+      authenticity: v.number(), // Average authenticity score
+      respectfulness: v.number(), // Average respectfulness score
+      compatibility: v.number(), // Average compatibility score
+      overall: v.number(), // Average overall score
+    })),
 
     // AI Persona customization
     aiPersonaPrompt: v.optional(v.string()), // Custom system prompt for their AI persona
@@ -102,6 +117,16 @@ export default defineSchema({
     messageCount: v.number(), // Track number of user messages (max 10)
     aiDecision: v.optional(v.string()), // "approved" or "rejected" after 10 messages
     aiReasoning: v.optional(v.string()), // AI's reasoning for the decision
+
+    // AI Evaluation Rubric (each scored 1-10)
+    aiRubric: v.optional(v.object({
+      engagement: v.number(), // How engaged and interested they were (1-10)
+      depth: v.number(), // Depth and thoughtfulness of responses (1-10)
+      authenticity: v.number(), // Genuine vs generic/copy-paste vibes (1-10)
+      respectfulness: v.number(), // Tone, manners, emotional intelligence (1-10)
+      compatibility: v.number(), // Shared interests, values, chemistry (1-10)
+      overall: v.number(), // Overall conversation quality (1-10)
+    })),
 
     timestamp: v.number(),
   })

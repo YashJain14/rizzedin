@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { calculateEloChange } from "./recommendations";
+import { calculateEloChangeFromSwipe } from "./recommendations";
 
 // Record a swipe action with proper ELO calculation
 export const recordSwipe = mutation({
@@ -57,7 +57,7 @@ export const recordSwipe = mutation({
       const swipedElo = swipedUser.eloScore || 1000;
 
       // Calculate ELO change (swiper is rating swipedUser positively)
-      const eloChange = calculateEloChange(swipedElo, swiperElo, 1); // 1 = win (got right swipe)
+      const eloChange = calculateEloChangeFromSwipe(swipedElo, swiperElo, 1); // 1 = win (got right swipe)
 
       await ctx.db.patch(swipedUser._id, {
         eloScore: swipedElo + eloChange,
@@ -76,7 +76,7 @@ export const recordSwipe = mutation({
       // Small ELO penalty for left swipes
       const swiperElo = swiper.eloScore || 1000;
       const swipedElo = swipedUser.eloScore || 1000;
-      const eloChange = calculateEloChange(swipedElo, swiperElo, 0, 16); // 0 = loss, smaller K-factor
+      const eloChange = calculateEloChangeFromSwipe(swipedElo, swiperElo, 0, 8); // 0 = loss, smaller K-factor
 
       await ctx.db.patch(swipedUser._id, {
         eloScore: Math.max(100, swipedElo + eloChange), // Min ELO of 100
