@@ -1,21 +1,48 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Trophy, Briefcase, Loader2, Users, Sparkles } from "lucide-react";
+import { Trophy, Briefcase, Loader2, Users, Sparkles, ImagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 export default function ExplorePage() {
+  const { user } = useUser();
+  const currentUser = useQuery(api.users.getUserByClerkId, user ? { clerkId: user.id } : "skip");
+  const isAdmin = currentUser?.role && currentUser.role >= 2;
+
   const [showPersonas, setShowPersonas] = useState(false);
+  const [generatingImageFor, setGeneratingImageFor] = useState<string | null>(null);
+
   const leaderboard = useQuery(api.matches.getLeaderboard, {
     limit: 50,
     showPersonas,
   });
+
+  const generatePersonaImage = useAction((api as any).bulkImport.generatePersonaImage);
+
+  const handleGenerateImage = async (clerkId: string, name: string) => {
+    setGeneratingImageFor(clerkId);
+    try {
+      const result = await generatePersonaImage({ clerkId, name });
+      if (result.success) {
+        toast.success(`Image generated successfully for ${name}`);
+      } else {
+        toast.error(`Failed to generate image: ${result.error}`);
+      }
+    } catch (error) {
+      toast.error("Failed to generate image");
+      console.error(error);
+    } finally {
+      setGeneratingImageFor(null);
+    }
+  };
 
   if (!leaderboard) {
     return (
@@ -110,12 +137,30 @@ export default function ExplorePage() {
                   {/* Profile Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-3 mb-3">
-                      <Avatar className="h-12 w-12 md:h-14 md:w-14">
-                        <AvatarImage src={user.image} alt={user.name} />
-                        <AvatarFallback className="text-lg">
-                          {user.name[0]?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar className="h-12 w-12 md:h-14 md:w-14">
+                          <AvatarImage src={user.image} alt={user.name} />
+                          <AvatarFallback className="text-lg">
+                            {user.name[0]?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {isAdmin && !user.image && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full p-0 shadow-md"
+                            onClick={() => handleGenerateImage(user.clerkId, user.name)}
+                            disabled={generatingImageFor === user.clerkId}
+                            title="Generate AI image"
+                          >
+                            {generatingImageFor === user.clerkId ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <ImagePlus className="h-3 w-3" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
 
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-lg md:text-xl truncate">
@@ -125,6 +170,9 @@ export default function ExplorePage() {
                           <p className="text-sm text-muted-foreground line-clamp-2">
                             {user.bio}
                           </p>
+                        )}
+                        {isAdmin && !user.image && (
+                          <p className="text-xs text-amber-600 mt-1">No image</p>
                         )}
                       </div>
                     </div>
