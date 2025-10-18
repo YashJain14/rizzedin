@@ -13,6 +13,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { Toaster } from 'sonner'
+import { Navigation } from '@/components/navigation'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -44,18 +45,18 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ConvexClientProvider>
-            <header className="flex justify-between items-center p-4 gap-4 h-16 border-b">
+            <header className="fixed top-0 left-0 right-0 flex justify-between items-center p-4 gap-4 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
               <div className="flex items-center">
                 <h1 className="text-xl font-bold">RizzedIn</h1>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 md:gap-4">
                 <ThemeToggle />
                 <SignedOut>
                   <SignInButton>
-                    <Button variant="ghost">Sign In</Button>
+                    <Button variant="ghost" size="sm">Sign In</Button>
                   </SignInButton>
                   <SignUpButton>
-                    <Button>Sign Up</Button>
+                    <Button size="sm">Sign Up</Button>
                   </SignUpButton>
                 </SignedOut>
                 <SignedIn>
@@ -63,7 +64,10 @@ export default function RootLayout({
                 </SignedIn>
               </div>
             </header>
-            {children}
+            <Navigation />
+            <main className="pt-16 lg:pl-64 pb-16 lg:pb-0">
+              {children}
+            </main>
             <Toaster richColors position="top-center" />
           </ConvexClientProvider>
         </ThemeProvider>

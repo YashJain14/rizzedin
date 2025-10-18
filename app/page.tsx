@@ -24,6 +24,9 @@ export default function Home() {
     if (isLoaded && user && existingUser !== undefined) {
       if (!existingUser || !existingUser.onboardingCompleted) {
         router.push("/onboarding");
+      } else {
+        // Redirect to FYP page if onboarding is complete
+        router.push("/fyp");
       }
     }
   }, [isLoaded, user, existingUser, router]);

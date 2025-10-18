@@ -44,7 +44,36 @@ export default defineSchema({
       description: v.optional(v.string()),
     }))),
 
+    // Dating app fields
+    eloScore: v.optional(v.number()), // ELO rating based on right swipes received
+    profileVector: v.optional(v.array(v.number())), // Vector embedding for similarity matching
+    totalRightSwipes: v.optional(v.number()), // Total right swipes received
+    totalLeftSwipes: v.optional(v.number()), // Total left swipes received
+    matchCount: v.optional(v.number()), // Total matches
+
     timestamp: v.number(),
   })
-    .index("by_clerk_id", ["clerkId"]),
+    .index("by_clerk_id", ["clerkId"])
+    .index("by_elo", ["eloScore"]),
+
+  // Swipes table - tracks all swipe actions
+  swipes: defineTable({
+    swiperId: v.string(), // Clerk ID of person swiping
+    swipedId: v.string(), // Clerk ID of person being swiped
+    direction: v.string(), // "left" or "right"
+    timestamp: v.number(),
+  })
+    .index("by_swiper", ["swiperId"])
+    .index("by_swiped", ["swipedId"])
+    .index("by_swiper_and_swiped", ["swiperId", "swipedId"]),
+
+  // Matches table - created when both users swipe right
+  matches: defineTable({
+    user1Id: v.string(), // Clerk ID of first user
+    user2Id: v.string(), // Clerk ID of second user
+    timestamp: v.number(),
+    chatStarted: v.optional(v.boolean()), // Has either user started chatting
+  })
+    .index("by_user1", ["user1Id"])
+    .index("by_user2", ["user2Id"]),
 });

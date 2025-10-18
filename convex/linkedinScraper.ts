@@ -248,7 +248,12 @@ export const scrapeLinkedInProfile = action({
         education: enrichedEducation,
       });
 
-      // 11. Mark onboarding as complete
+      // 11. Generate profile vector for recommendation system
+      await ctx.runMutation(api.recommendations.updateProfileVector, {
+        clerkId: args.clerkId,
+      });
+
+      // 12. Mark onboarding as complete
       await ctx.runMutation(api.users.markOnboardingComplete, {
         clerkId: args.clerkId,
       });

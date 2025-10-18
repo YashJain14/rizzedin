@@ -36,6 +36,10 @@ export const createUser = mutation({
       age: 0, // Will be set during onboarding
       gender: "", // Will be set during onboarding
       datingPreference: "", // Will be set during onboarding
+      eloScore: 1000, // Starting ELO score
+      totalRightSwipes: 0,
+      totalLeftSwipes: 0,
+      matchCount: 0,
       timestamp: Date.now(),
     });
 

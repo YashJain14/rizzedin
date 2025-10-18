@@ -9,6 +9,9 @@
  */
 
 import type * as linkedinScraper from "../linkedinScraper.js";
+import type * as matches from "../matches.js";
+import type * as recommendations from "../recommendations.js";
+import type * as swipes from "../swipes.js";
 import type * as users from "../users.js";
 
 import type {
@@ -27,6 +30,9 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   linkedinScraper: typeof linkedinScraper;
+  matches: typeof matches;
+  recommendations: typeof recommendations;
+  swipes: typeof swipes;
   users: typeof users;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
