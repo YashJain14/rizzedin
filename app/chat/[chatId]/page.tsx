@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Send, ArrowLeft, Sparkles, Heart, X } from "lucide-react";
+import { Loader2, Send, ArrowLeft, Sparkles, Heart, X, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ChatPage() {
@@ -263,7 +263,15 @@ export default function ChatPage() {
         {!isComplete && (
           <Card>
             <CardContent className="p-4">
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                {/* Message Counter */}
+                <div className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 rounded-lg border border-primary/20 whitespace-nowrap">
+                  <MessageCircle className={`h-4 w-4 ${messagesRemaining <= 3 ? 'text-orange-500' : 'text-primary'}`} />
+                  <span className={`text-sm font-medium ${messagesRemaining <= 3 ? 'text-orange-600 dark:text-orange-500' : 'text-primary'}`}>
+                    {messagesRemaining} left
+                  </span>
+                </div>
+
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
