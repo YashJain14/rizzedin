@@ -88,9 +88,9 @@ export const getLeaderboard = query({
 
         // Filter by role based on showPersonas toggle
         if (showPersonas) {
-          return u.role === 0; // Show only imported personas
+          return (u.role ?? 1) === 0; // Show only imported personas
         } else {
-          return u.role >= 1; // Show real users (normal, admin, superadmin)
+          return (u.role ?? 1) >= 1; // Show real users (normal, admin, superadmin)
         }
       })
       .map((u) => ({

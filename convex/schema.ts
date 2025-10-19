@@ -11,7 +11,7 @@ export default defineSchema({
     onboardingCompleted: v.boolean(),
 
     // Role-based access control
-    role: v.number(), // 0 = imported persona (practice), 1 = normal user, 2 = admin, 3 = superadmin
+    role: v.optional(v.number()), // 0 = imported persona (practice), 1 = normal user, 2 = admin, 3 = superadmin
 
     // Fields added later from LinkedIn scraping
     name: v.optional(v.string()),
