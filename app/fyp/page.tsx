@@ -24,6 +24,7 @@ export default function FYPPage() {
   );
 
   const recordSwipe = useMutation(api.swipes.recordSwipe);
+  const getOrCreateChat = useMutation(api.aiChat.getOrCreateChat);
 
   const currentProfile = potentialMatches?.[currentIndex];
 
@@ -42,8 +43,15 @@ export default function FYPPage() {
       });
 
       if (direction === "right") {
-        // Redirect to AI chat page
+        // Create chat before redirecting to ensure it exists
         const chatId = `${user.id}-${currentProfile.clerkId}`;
+        await getOrCreateChat({
+          swiperId: user.id,
+          swipedId: currentProfile.clerkId,
+          chatId,
+        });
+
+        // Redirect to AI chat page
         router.push(`/chat/${chatId}`);
       } else {
         // Move to next profile for left swipe
